@@ -47,7 +47,6 @@ def fill_model_msg(msg: capnp._DynamicStructBuilder, net_output_data: Dict[str, 
                    timestamp_eof: int, timestamp_llk: int, model_execution_time: float,
                    nav_enabled: bool, v_ego: float, steer_delay: float, valid: bool) -> None:
   frame_age = frame_id - vipc_frame_id if frame_id > vipc_frame_id else 0
-  print(vipc_frame_id)
   msg.valid = valid
 
   modelV2 = msg.modelV2

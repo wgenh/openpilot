@@ -59,8 +59,8 @@ class ModelState:
       'traffic_convention': np.zeros(ModelConstants.TRAFFIC_CONVENTION_LEN, dtype=np.float32),
       'lateral_control_params': np.zeros(ModelConstants.LATERAL_CONTROL_PARAMS_LEN, dtype=np.float32),
       'prev_desired_curv': np.zeros(ModelConstants.PREV_DESIRED_CURV_LEN * (ModelConstants.HISTORY_BUFFER_LEN+1), dtype=np.float32),
-      'nav_features': np.zeros(ModelConstants.NAV_FEATURE_LEN, dtype=np.float32),
-      'nav_instructions': np.zeros(ModelConstants.NAV_INSTRUCTION_LEN, dtype=np.float32),
+      #'nav_features': np.zeros(ModelConstants.NAV_FEATURE_LEN, dtype=np.float32),
+      #'nav_instructions': np.zeros(ModelConstants.NAV_INSTRUCTION_LEN, dtype=np.float32),
       'features_buffer': np.zeros(ModelConstants.HISTORY_BUFFER_LEN * ModelConstants.FEATURE_LEN, dtype=np.float32),
     }
 
@@ -94,8 +94,8 @@ class ModelState:
 
     self.inputs['traffic_convention'][:] = inputs['traffic_convention']
     self.inputs['lateral_control_params'][:] = inputs['lateral_control_params']
-    self.inputs['nav_features'][:] = inputs['nav_features']
-    self.inputs['nav_instructions'][:] = inputs['nav_instructions']
+    #self.inputs['nav_features'][:] = inputs['nav_features']
+    #self.inputs['nav_instructions'][:] = inputs['nav_instructions']
 
     # if getCLBuffer is not None, frame will be None
     self.model.setInputBuffer("input_imgs", self.frame.prepare(buf, transform.flatten(), self.model.getCLBuffer("input_imgs")))
@@ -106,7 +106,10 @@ class ModelState:
       return None
 
     self.model.execute()
-    outputs = self.parser.parse_outputs(self.slice_outputs(self.output))
+    # TODO add back desire_state
+    sliced_outputs = self.slice_outputs(self.output)
+    sliced_outputs['desire_state'] = np.zeros((1,8), dtype=np.float32)
+    outputs = self.parser.parse_outputs(sliced_outputs)
 
     self.inputs['features_buffer'][:-ModelConstants.FEATURE_LEN] = self.inputs['features_buffer'][ModelConstants.FEATURE_LEN:]
     self.inputs['features_buffer'][-ModelConstants.FEATURE_LEN:] = outputs['hidden_state'][0, :]
@@ -168,8 +171,8 @@ def main(demo=False):
   model_transform_main = np.zeros((3, 3), dtype=np.float32)
   model_transform_extra = np.zeros((3, 3), dtype=np.float32)
   live_calib_seen = False
-  nav_features = np.zeros(ModelConstants.NAV_FEATURE_LEN, dtype=np.float32)
-  nav_instructions = np.zeros(ModelConstants.NAV_INSTRUCTION_LEN, dtype=np.float32)
+  #nav_features = np.zeros(ModelConstants.NAV_FEATURE_LEN, dtype=np.float32)
+  #nav_instructions = np.zeros(ModelConstants.NAV_INSTRUCTION_LEN, dtype=np.float32)
   buf_main, buf_extra = None, None
   meta_main = FrameMeta()
   meta_extra = FrameMeta()
@@ -245,24 +248,24 @@ def main(demo=False):
     nav_valid = sm.valid["navModel"] # and (nanos_since_boot() - timestamp_llk < 1e9)
     nav_enabled = nav_valid and params.get_bool("ExperimentalMode")
 
-    if not nav_enabled:
-      nav_features[:] = 0
-      nav_instructions[:] = 0
+    #if not nav_enabled:
+    #  nav_features[:] = 0
+    #  nav_instructions[:] = 0
 
-    if nav_enabled and sm.updated["navModel"]:
-      nav_features = np.array(sm["navModel"].features)
+    #if nav_enabled and sm.updated["navModel"]:
+    #  nav_features = np.array(sm["navModel"].features)
 
-    if nav_enabled and sm.updated["navInstruction"]:
-      nav_instructions[:] = 0
-      for maneuver in sm["navInstruction"].allManeuvers:
-        distance_idx = 25 + int(maneuver.distance / 20)
-        direction_idx = 0
-        if maneuver.modifier in ("left", "slight left", "sharp left"):
-          direction_idx = 1
-        if maneuver.modifier in ("right", "slight right", "sharp right"):
-          direction_idx = 2
-        if 0 <= distance_idx < 50:
-          nav_instructions[distance_idx*3 + direction_idx] = 1
+    #if nav_enabled and sm.updated["navInstruction"]:
+    #  nav_instructions[:] = 0
+    #  for maneuver in sm["navInstruction"].allManeuvers:
+    #    distance_idx = 25 + int(maneuver.distance / 20)
+    #    direction_idx = 0
+    #    if maneuver.modifier in ("left", "slight left", "sharp left"):
+    #      direction_idx = 1
+    #    if maneuver.modifier in ("right", "slight right", "sharp right"):
+    #      direction_idx = 2
+    #    if 0 <= distance_idx < 50:
+    #      nav_instructions[distance_idx*3 + direction_idx] = 1
 
     # tracked dropped frames
     vipc_dropped_frames = max(0, meta_main.frame_id - last_vipc_frame_id - 1)
@@ -281,8 +284,9 @@ def main(demo=False):
       'desire': vec_desire,
       'traffic_convention': traffic_convention,
       'lateral_control_params': lateral_control_params,
-      'nav_features': nav_features,
-      'nav_instructions': nav_instructions}
+      #'nav_features': nav_features,
+      #'nav_instructions': nav_instructions
+      }
 
     mt1 = time.perf_counter()
     model_output = model.run(buf_main, buf_extra, model_transform_main, model_transform_extra, inputs, prepare_only)

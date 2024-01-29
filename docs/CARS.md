@@ -6,7 +6,7 @@ A supported vehicle is one that just works when you install a comma device. All 
 
 # 275 Supported Cars
 
-|Make|Model|Supported Package|ACC|No ACC accel below|No ALC below|Steering Torque|Resume from stop|<a href="##"><img width=2000></a>Hardware Needed<br>&nbsp;|Video|
+|Make|Model|Supported Package|ACC|No ACC accel below|No ALC below|Steering Torque|Resume from stop|Hardware&nbsp;Needed|Video|
 |---|---|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
 |Acura|ILX 2016-19|AcuraWatch Plus|openpilot|25 mph|25 mph|[![star](assets/icon-star-empty.svg)](##)|[![star](assets/icon-star-empty.svg)](##)|<details><summary>Parts</summary><sub>- 1 Honda Nidec connector<br>- 1 RJ45 cable (7 ft)<br>- 1 comma 3X<br>- 1 comma power v2<br>- 1 harness box<br>- 1 mount<br>- 1 right angle OBD-C cable (1.5 ft)<br><a href="https://comma.ai/shop/comma-3x.html?make=Acura&model=ILX 2016-19">Buy Here</a></sub></details>||
 |Acura|RDX 2016-18|AcuraWatch Plus|openpilot|25 mph|12 mph|[![star](assets/icon-star-empty.svg)](##)|[![star](assets/icon-star-empty.svg)](##)|<details><summary>Parts</summary><sub>- 1 Honda Nidec connector<br>- 1 RJ45 cable (7 ft)<br>- 1 comma 3X<br>- 1 comma power v2<br>- 1 harness box<br>- 1 mount<br>- 1 right angle OBD-C cable (1.5 ft)<br><a href="https://comma.ai/shop/comma-3x.html?make=Acura&model=RDX 2016-18">Buy Here</a></sub></details>||

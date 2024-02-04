@@ -1,5 +1,6 @@
 from cereal import car
 from openpilot.selfdrive.car.chrysler.values import RAM_CARS
+from openpilot.common.conversions import Conversions as CV
 
 GearShifter = car.CarState.GearShifter
 VisualAlert = car.CarControl.HUDControl.VisualAlert
@@ -69,3 +70,47 @@ def create_cruise_buttons(packer, frame, bus, cancel=False, resume=False):
     "COUNTER": frame % 0x10,
   }
   return packer.make_can_msg("CRUISE_BUTTONS", bus, values)
+
+def create_acc_commands(packer, enabled, long_active, gas, brakes, starting, stopping):
+  commands = []
+
+  das_3_values = {
+    'ACC_AVAILABLE': 1,
+    'ACC_ACTIVE': enabled,
+    'ACC_DECEL_REQ': brakes < 0.0 if long_active else 0,
+    'ACC_DECEL': brakes,
+    'ENGINE_TORQUE_REQUEST_MAX': brakes >= 0.0 if long_active else 0,
+    'ENGINE_TORQUE_REQUEST': gas,
+    'ACC_STANDSTILL': stopping if long_active else 0,
+    'ACC_GO': starting if long_active else 0,
+    # TODO: does this have any impact on fuel economy when engine braking?
+    # TODO: does this disable auto engine start/stop?
+    'DISABLE_FUEL_SHUTOFF': 1,
+    # TODO: does this have any impact on ACC braking responsiveness?
+    # TODO: does this cause a fault if set for too long?
+    #'ACC_BRK_PREP': brakes < 0.5 if enabled else 0,
+    # TODO: does this have any impact on ACC braking responsiveness?
+    #'COLLISION_BRK_PREP': ?,
+  }
+  commands.append(packer.make_can_msg("DAS_3", 0, das_3_values))
+
+  das_5_values = {
+    "FCW_STATE": 0, # off
+    "FCW_DISTANCE": 0, # off
+  }
+  commands.append(packer.make_can_msg("DAS_5", 0, das_5_values))
+
+  return commands
+
+def create_acc_hud(packer, enabled, set_speed):
+  values = {
+    "SPEED_DIGITAL": 197, # TODO: rename, this is actually distance to lead, check if pacifica is same
+    "ACC_STATE": 4 if enabled else 3, # 4 = ACC set, 3 = ACC on
+    "ACC_SET_SPEED_KPH": round(set_speed * CV.MS_TO_KPH),
+    "ACC_SET_SPEED_MPH": round(set_speed * CV.MS_TO_MPH),
+    "ACC_DISTANCE_CONFIG_1": 0, # not sure what this is
+    "ACC_DISTANCE_CONFIG_2": 3 if enabled else 0, # not sure what this is
+    "FCW_OFF": 1,
+    "FCW_BRAKE_DISABLED": 1,
+  }
+  return packer.make_can_msg("DAS_4", 0, values)

@@ -14,10 +14,18 @@ class ChryslerFlags(IntFlag):
   # Detected flags
   HIGHER_MIN_STEERING_SPEED = 1
 
+
 @dataclass
 class ChryslerCarInfo(CarInfo):
   package: str = "Adaptive Cruise Control (ACC)"
   car_parts: CarParts = field(default_factory=CarParts.common([CarHarness.fca]))
+
+
+class CruiseButtons:
+  RESUME = 16
+  DECEL = 8
+  ACCEL = 4
+  CANCEL = 1
 
 
 @dataclass
@@ -110,11 +118,22 @@ class CarControllerParams:
     elif CP.carFingerprint in RAM_DT:
       self.STEER_DELTA_UP = 6
       self.STEER_DELTA_DOWN = 6
-      self.STEER_MAX = 261  # EPS allows more, up to 350?
+      self.STEER_MAX = 350
     else:
       self.STEER_DELTA_UP = 3
       self.STEER_DELTA_DOWN = 3
       self.STEER_MAX = 261  # higher than this faults the EPS
+
+    self.ACC_CONTROL_STEP = 2  # 50Hz
+    self.GAS_MIN = 0.0 # TODO: -50.0 instead mabye?
+    self.GAS_MAX = 500.0
+    self.GAS_MAX_BP = [1, 5, 20]
+    self.GAS_MAX_V = [self.GAS_MAX / 4, self.GAS_MAX / 2, self.GAS_MAX]
+    self.INACTIVE_GAS = 0.0
+
+    self.ACCEL_MIN = -3.5
+    self.ACCEL_MAX = 2.0
+    self.INACTIVE_ACCEL = 4.0
 
 
 STEER_THRESHOLD = 120

@@ -138,10 +138,10 @@ class CarController(CarControllerBase):
         pitch = CC.orientationNED[1] if len(CC.orientationNED) > 1 else 0
         drag_force = calc_drag_force(CS.engine_torque, CS.transmission_gear, pitch, CS.out.aEgo, CS.out.vEgo)
         gas = clip(calc_engine_torque(accel, pitch, CS.transmission_gear, drag_force), self.params.GAS_MIN, self.params.GAS_MAX)
-        gas = min(gas, self.last_gas + 1)
+        gas = min(gas, self.last_gas + 2)
         self.last_gas = max(gas, 0)
-        # TODO: not great way to handle road pitch sometimes causing negative accel to be positive gas (uphill)
-        if (CS.out.vEgo < 5.0 and accel < 0.0) or (CS.out.vEgo >= 5.0 and gas <= 0.0):
+        # TODO: handle road pitch sometimes causing negative accel to be positive gas (uphill)
+        if accel < 0.0:
           gas = 0.0
           brakes = min(accel, 0)
 

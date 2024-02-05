@@ -30,7 +30,7 @@ def calc_motion_force(aEgo, road_pitch):
   return force_parallel + force_perpendicular
 
 def calc_drag_force(engine_torque, transmision_gear, road_pitch, aEgo, vEgo, wind=0):
-  if engine_torque <= 0 or vEgo < 2 or transmision_gear == 0:
+  if vEgo < 2:
     # https://x-engineer.org/rolling-resistance/
     force_rolling = ROLLING_RESISTANCE_COEFF * VEHICLE_MASS * GRAVITY
     # https://x-engineer.org/aerodynamic-drag/
@@ -128,8 +128,8 @@ class CarController(CarControllerBase):
       stopping = False
       gas = self.params.INACTIVE_GAS
       brakes = self.params.INACTIVE_ACCEL
-      if not CC.enabled:
-        self.last_gas = 0
+      if not CC.longActive:
+        self.last_gas = max(CS.engine_torque, 0.0)
 
       if CC.longActive:
         starting = CS.out.vEgo < 0.25 and accel > 0.0 # TODO: use CC.actuators.longControlState == LongCtrlState.starting with disabled startAccel?
@@ -140,7 +140,9 @@ class CarController(CarControllerBase):
         gas = clip(calc_engine_torque(accel, pitch, CS.transmission_gear, drag_force), self.params.GAS_MIN, self.params.GAS_MAX)
         gas = min(gas, self.last_gas + 1)
         self.last_gas = max(gas, 0)
-        if accel < -0.1:
+        # TODO: not great way to handle road pitch sometimes causing negative accel to be positive gas (uphill)
+        if (CS.out.vEgo < 5.0 and accel < 0.0) or (CS.out.vEgo >= 5.0 and gas <= 0.0):
+          gas = 0.0
           brakes = min(accel, 0)
 
       can_sends.extend(chryslercan.create_acc_commands(self.packer, CC.enabled, CC.longActive, gas, brakes, starting, stopping))

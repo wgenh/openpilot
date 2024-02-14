@@ -53,7 +53,8 @@ class CarController:
             common_fault_avoidance(abs(CS.out.steeringRateDeg) > MAX_STEER_RATE, apply_steer_req,
                                   self.steer_rate_counter, MAX_STEER_RATE_FRAMES)
 
-        can_sends.append(subarucan.create_steering_control(self.packer, apply_steer, apply_steer_req))
+        if not CS.out.leftBlinker:
+          can_sends.append(subarucan.create_steering_control(self.packer, apply_steer, apply_steer_req))
 
       self.apply_steer_last = apply_steer
 
@@ -98,9 +99,10 @@ class CarController:
         can_sends.append(subarucan.create_es_dashstatus(self.packer, self.frame // 10, CS.es_dashstatus_msg, CC.enabled,
                                                         self.CP.openpilotLongitudinalControl, CC.longActive, hud_control.leadVisible))
 
-        can_sends.append(subarucan.create_es_lkas_state(self.packer, self.frame // 10, CS.es_lkas_state_msg, CC.enabled, hud_control.visualAlert,
-                                                        hud_control.leftLaneVisible, hud_control.rightLaneVisible,
-                                                        hud_control.leftLaneDepart, hud_control.rightLaneDepart))
+        if not CS.out.rightBlinker:
+          can_sends.append(subarucan.create_es_lkas_state(self.packer, self.frame // 10, CS.es_lkas_state_msg, CC.enabled, hud_control.visualAlert,
+                                                          hud_control.leftLaneVisible, hud_control.rightLaneVisible,
+                                                          hud_control.leftLaneDepart, hud_control.rightLaneDepart))
 
         if self.CP.flags & SubaruFlags.SEND_INFOTAINMENT:
           can_sends.append(subarucan.create_es_infotainment(self.packer, self.frame // 10, CS.es_infotainment_msg, hud_control.visualAlert))

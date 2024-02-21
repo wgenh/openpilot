@@ -107,6 +107,7 @@ class ModelState:
 
     self.model.execute()
     outputs = self.parser.parse_outputs(self.slice_outputs(self.output))
+    print(outputs['sim_pose'])
 
     self.inputs['features_buffer'][:-ModelConstants.FEATURE_LEN] = self.inputs['features_buffer'][ModelConstants.FEATURE_LEN:]
     self.inputs['features_buffer'][-ModelConstants.FEATURE_LEN:] = outputs['hidden_state'][0, :]

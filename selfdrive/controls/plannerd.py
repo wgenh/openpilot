@@ -32,7 +32,7 @@ def plannerd_thread():
                            poll='modelV2', ignore_avg_freq=['radarState'])
 
   while True:
-    sm.update()
+    sm.update(500)
     if sm.updated['modelV2']:
       longitudinal_planner.update(sm)
       longitudinal_planner.publish(sm, pm)

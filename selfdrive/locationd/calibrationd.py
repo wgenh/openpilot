@@ -282,9 +282,7 @@ def main() -> NoReturn:
       if DEBUG and new_rpy is not None:
         print('got new rpy', new_rpy)
 
-    # 4Hz driven by cameraOdometry
-    if sm.frame % 5 == 0:
-      calibrator.send_data(pm, sm.all_checks())
+    calibrator.send_data(pm, sm.all_checks())
 
 
 if __name__ == "__main__":

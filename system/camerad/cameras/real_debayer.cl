@@ -66,13 +66,12 @@ constant float ox03c10_lut[] = {
 };
 
 float4 val4_from_12(uchar8 pvs, float gain) {
-  uint4 parsed = (uint4)(((uint)pvs.s0<<4) + (pvs.s1>>4),  // is from the previous 10 bit
-                         ((uint)pvs.s2<<4) + (pvs.s4&0xF),
-                         ((uint)pvs.s3<<4) + (pvs.s4>>4),
-                         ((uint)pvs.s5<<4) + (pvs.s7&0xF));
+  uint4 parsed = (uint4)(((uint)pvs.s0 << 4) + (pvs.s1 & 0b00001111),
+                                      ((uint)pvs.s2 << 4) + (pvs.s4 >> 4),
+                                      ((uint)pvs.s3 << 4) + (pvs.s4 & 0b00001111),
+                                      ((uint)pvs.s5 << 4) + (pvs.s7 >> 4));
   #if IS_OX
   // PWL
-  //float4 pv = (convert_float4(parsed) - 64.0) / (4096.0 - 64.0);
   float4 pv = {ox03c10_lut[parsed.s0], ox03c10_lut[parsed.s1], ox03c10_lut[parsed.s2], ox03c10_lut[parsed.s3]};
 
   // it's a 24 bit signal, center in the middle 8 bits

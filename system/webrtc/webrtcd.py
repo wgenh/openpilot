@@ -196,7 +196,7 @@ class StreamRequestBody:
   bridge_services_out: list[str] = field(default_factory=list)
 
 
-async def get_stream(request: 'web.Request'):
+async def post_stream(request: 'web.Request'):
   stream_dict, debug_mode = request.app['streams'], request.app['debug']
   raw_body = await request.json()
   body = StreamRequestBody(**raw_body)
@@ -235,7 +235,7 @@ def webrtcd_thread(host: str, port: int, debug: bool):
   app['streams'] = dict()
   app['debug'] = debug
   app.on_shutdown.append(on_shutdown)
-  app.router.add_post("/stream", get_stream)
+  app.router.add_post("/stream", post_stream)
   app.router.add_get("/schema", get_schema)
 
   web.run_app(app, host=host, port=port)

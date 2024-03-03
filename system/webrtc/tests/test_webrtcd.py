@@ -7,7 +7,7 @@ from unittest.mock import MagicMock, AsyncMock
 import warnings
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
-from openpilot.system.webrtc.webrtcd import get_stream
+from openpilot.system.webrtc.webrtcd import post_stream
 
 import aiortc
 from teleoprtc import WebRTCOfferBuilder
@@ -26,7 +26,7 @@ class TestWebrtcdProc(unittest.IsolatedAsyncioTestCase):
     async def connect(offer):
       body = {'sdp': offer.sdp, 'cameras': offer.video, 'bridge_services_in': [], 'bridge_services_out': ['carState']}
       mock_request.json.side_effect = AsyncMock(return_value=body)
-      response = await get_stream(mock_request)
+      response = await post_stream(mock_request)
       response_json = json.loads(response.text)
       return aiortc.RTCSessionDescription(**response_json)
 

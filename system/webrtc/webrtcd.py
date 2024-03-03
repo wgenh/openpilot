@@ -20,8 +20,6 @@ if TYPE_CHECKING:
 from openpilot.system.webrtc.schema import generate_field
 from cereal import messaging, log
 
-DEFAULT_HEADERS = {"Access-Control-Allow-Origin": "*"}
-
 
 class CerealOutgoingMessageProxy:
   def __init__(self, sm: messaging.SubMaster):
@@ -196,6 +194,19 @@ class StreamRequestBody:
   bridge_services_out: list[str] = field(default_factory=list)
 
 
+@web.middleware
+async def default_headers_middleware(request: 'web.Request', handler):
+  DEFAULT_HEADERS = {"Access-Control-Allow-Origin": "*"}
+
+  if request.method == "OPTIONS":
+    return web.Response(headers=DEFAULT_HEADERS)
+  else:
+    response = await handler(request)
+    for header, value in DEFAULT_HEADERS.items():
+      response.headers[header] = value
+    return response
+
+
 async def post_stream(request: 'web.Request'):
   stream_dict, debug_mode = request.app['streams'], request.app['debug']
   raw_body = await request.json()
@@ -207,7 +218,7 @@ async def post_stream(request: 'web.Request'):
 
   stream_dict[session.identifier] = session
 
-  return web.json_response({"sdp": answer.sdp, "type": answer.type}, headers=DEFAULT_HEADERS)
+  return web.json_response({"sdp": answer.sdp, "type": answer.type})
 
 
 async def get_schema(request: 'web.Request'):
@@ -215,7 +226,7 @@ async def get_schema(request: 'web.Request'):
   services = [s for s in services if s]
   assert all(s in log.Event.schema.fields and not s.endswith("DEPRECATED") for s in services), "Invalid service name"
   schema_dict = {s: generate_field(log.Event.schema.fields[s]) for s in services}
-  return web.json_response(schema_dict, headers=DEFAULT_HEADERS)
+  return web.json_response(schema_dict)
 
 
 async def on_shutdown(app: 'web.Application'):
@@ -230,7 +241,7 @@ def webrtcd_thread(host: str, port: int, debug: bool):
   logging.getLogger("WebRTCStream").setLevel(logging_level)
   logging.getLogger("webrtcd").setLevel(logging_level)
 
-  app = web.Application()
+  app = web.Application(middlewares=[default_headers_middleware])
 
   app['streams'] = dict()
   app['debug'] = debug

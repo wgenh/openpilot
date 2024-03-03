@@ -196,7 +196,11 @@ class StreamRequestBody:
 
 @web.middleware
 async def default_headers_middleware(request: 'web.Request', handler):
-  DEFAULT_HEADERS = {"Access-Control-Allow-Origin": "*"}
+  DEFAULT_HEADERS = {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type",
+  }
 
   if request.method == "OPTIONS":
     return web.Response(headers=DEFAULT_HEADERS)

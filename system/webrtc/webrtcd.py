@@ -20,6 +20,8 @@ if TYPE_CHECKING:
 from openpilot.system.webrtc.schema import generate_field
 from cereal import messaging, log
 
+DEFAULT_HEADERS = {"Access-Control-Allow-Origin": "*"}
+
 
 class CerealOutgoingMessageProxy:
   def __init__(self, sm: messaging.SubMaster):
@@ -205,7 +207,7 @@ async def get_stream(request: 'web.Request'):
 
   stream_dict[session.identifier] = session
 
-  return web.json_response({"sdp": answer.sdp, "type": answer.type})
+  return web.json_response({"sdp": answer.sdp, "type": answer.type}, headers=DEFAULT_HEADERS)
 
 
 async def get_schema(request: 'web.Request'):
@@ -213,7 +215,7 @@ async def get_schema(request: 'web.Request'):
   services = [s for s in services if s]
   assert all(s in log.Event.schema.fields and not s.endswith("DEPRECATED") for s in services), "Invalid service name"
   schema_dict = {s: generate_field(log.Event.schema.fields[s]) for s in services}
-  return web.json_response(schema_dict)
+  return web.json_response(schema_dict, headers=DEFAULT_HEADERS)
 
 
 async def on_shutdown(app: 'web.Application'):

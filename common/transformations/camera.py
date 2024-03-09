@@ -5,12 +5,12 @@ import openpilot.common.transformations.orientation as orient
 ## -- hardcoded hardware params --
 eon_f_focal_length = 910.0
 eon_d_focal_length = 650.0
-tici_f_focal_length = 2648.0
-tici_e_focal_length = tici_d_focal_length = 567.0 # probably wrong? magnification is not consistent across frame
+tici_f_focal_length = 2648.0 / 2 * 3
+tici_e_focal_length = tici_d_focal_length = 567.0 / 2 * 3 # probably wrong? magnification is not consistent across frame
 
 eon_f_frame_size = (1164, 874)
 eon_d_frame_size = (816, 612)
-tici_f_frame_size = tici_e_frame_size = tici_d_frame_size = (1928, 1208)
+tici_f_frame_size = tici_e_frame_size = tici_d_frame_size = (2688, 1520)
 
 # aka 'K' aka camera_frame_from_view_frame
 eon_fcam_intrinsics = np.array([

@@ -1,6 +1,7 @@
 venv/
 .venv/
 .ci_cache
+openpilot_release.json
 .env
 .clang-format
 .DS_Store

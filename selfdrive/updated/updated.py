@@ -10,6 +10,7 @@ import threading
 
 from openpilot.common.params import Params
 from openpilot.common.time import system_time_valid
+from openpilot.selfdrive.updated.casync import CASyncUpdateStrategy
 from openpilot.selfdrive.updated.common import LOCK_FILE, STAGING_ROOT, UpdateStrategy, run, set_consistent_flag
 from openpilot.system.hardware import AGNOS, HARDWARE
 from openpilot.common.swaglog import cloudlog
@@ -83,6 +84,7 @@ def handle_agnos_update(fetched_path) -> None:
 
 STRATEGY = {
   "git": GitUpdateStrategy,
+  "casync": CASyncUpdateStrategy
 }
 
 

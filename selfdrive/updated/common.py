@@ -15,8 +15,9 @@ STAGING_ROOT = os.getenv("UPDATER_STAGING_ROOT", "/data/safe_staging")
 FINALIZED = os.path.join(STAGING_ROOT, "finalized")
 
 
-def run(cmd: list[str], cwd: str = None) -> str:
-  return subprocess.check_output(cmd, cwd=cwd, stderr=subprocess.STDOUT, encoding='utf8')
+def run(cmd: list[str], cwd: str = None, env: dict = None) -> str:
+  env = dict(os.environ.copy()) if env is None else env
+  return subprocess.check_output(cmd, cwd=cwd, stderr=subprocess.STDOUT, encoding='utf8', env=env)
 
 
 class UpdateStrategy(abc.ABC):

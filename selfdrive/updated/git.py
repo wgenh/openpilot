@@ -142,7 +142,8 @@ class GitUpdateStrategy(UpdateStrategy):
       return hash_mismatch or branch_mismatch
     return False
 
-  def get_branch(self, path: str) -> str:
+  @classmethod
+  def get_branch(cls, path: str) -> str:
     return run(["git", "rev-parse", "--abbrev-ref", "HEAD"], path).rstrip()
 
   def get_commit_hash(self, path) -> str:

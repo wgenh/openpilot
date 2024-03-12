@@ -4,19 +4,11 @@ set -ex
 
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null && pwd)"
 
-SOURCE_DIR="$(git -C $DIR rev-parse --show-toplevel)"
-if [ -z "$TARGET_DIR" ]; then
-  TARGET_DIR="$(mktemp -d)"
-fi
+source $DIR/release_common.sh
 
-# set git identity
-source $DIR/identity.sh
-
+cd $TARGET_DIR
 echo "[-] Setting up target repo T=$SECONDS"
 
-rm -rf $TARGET_DIR
-mkdir -p $TARGET_DIR
-cd $TARGET_DIR
 cp -r $SOURCE_DIR/.git $TARGET_DIR
 pre-commit uninstall || true
 

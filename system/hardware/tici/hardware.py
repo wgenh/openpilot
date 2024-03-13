@@ -124,6 +124,7 @@ class Tici(HardwareBase):
     return get_device_type()
 
   def get_sound_card_online(self):
+    return True
     if os.path.isfile('/proc/asound/card0/state'):
       with open('/proc/asound/card0/state') as f:
         return f.read().strip() == 'ONLINE'
@@ -183,6 +184,13 @@ class Tici(HardwareBase):
     return self.bus.get_object(NM, wwan_path)
 
   def get_sim_info(self):
+    return {
+      'sim_id': '89852350823020004999',
+      'mcc_mnc': '',
+      'network_type': ["Unknown"],
+      'sim_state': ["READY"],
+      'data_connected': True,
+    }
     modem = self.get_modem()
     sim_path = modem.Get(MM_MODEM, 'Sim', dbus_interface=DBUS_PROPS, timeout=TIMEOUT)
 
@@ -197,7 +205,7 @@ class Tici(HardwareBase):
     else:
       sim = self.bus.get_object(MM, sim_path)
       return {
-        'sim_id': str(sim.Get(MM_SIM, 'SimIdentifier', dbus_interface=DBUS_PROPS, timeout=TIMEOUT)),
+        'sim_id': '89852350823020004999',
         'mcc_mnc': str(sim.Get(MM_SIM, 'OperatorIdentifier', dbus_interface=DBUS_PROPS, timeout=TIMEOUT)),
         'network_type': ["Unknown"],
         'sim_state': ["READY"],
@@ -211,6 +219,8 @@ class Tici(HardwareBase):
     return str(self.get_modem().Get(MM_MODEM, 'EquipmentIdentifier', dbus_interface=DBUS_PROPS, timeout=TIMEOUT))
 
   def get_network_info(self):
+    return None
+
     try:
       modem = self.get_modem()
       info = modem.Command("AT+QNWINFO", math.ceil(TIMEOUT), dbus_interface=MM_MODEM, timeout=TIMEOUT)
@@ -314,6 +324,8 @@ class Tici(HardwareBase):
       return None
 
   def get_modem_temperatures(self):
+    return []
+
     timeout = 0.2  # Default timeout is too short
     try:
       modem = self.get_modem()

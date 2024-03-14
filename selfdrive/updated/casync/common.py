@@ -6,10 +6,7 @@ from openpilot.selfdrive.updated.common import get_release_notes, get_version
 
 
 CASYNC_ARGS = ["--with=symlinks"]
-
 CHANNEL_MANIFEST_FILE = "channel.json" # file that contains details of the current release
-
-
 CASYNC_FILES = [CHANNEL_MANIFEST_FILE, ".caexclude"]
 
 

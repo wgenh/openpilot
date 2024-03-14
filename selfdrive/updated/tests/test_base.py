@@ -49,16 +49,12 @@ def get_consistent_flag(path: str) -> bool:
 
 @pytest.mark.slow # TODO: can we test overlayfs in GHA?
 class BaseUpdateTest(unittest.TestCase):
-
   @classmethod
   def setUpClass(cls):
     if "Base" in cls.__name__:
       raise unittest.SkipTest
 
   def setUp(self):
-    if "Base" in self.__class__.__name__:
-      raise unittest.SkipTest("base class")
-
     self.tmpdir = tempfile.mkdtemp()
 
     run(["sudo", "mount", "-t", "tmpfs", "tmpfs", self.tmpdir]) # overlayfs doesn't work inside of docker unless this is a tmpfs

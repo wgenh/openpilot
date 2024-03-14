@@ -10,7 +10,10 @@ mkdir -p $CASYNC_DIR
 
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null && pwd)"
 
-source $DIR/release_common.sh
+export SOURCE_DIR="$(git -C $DIR rev-parse --show-toplevel)"
+if [ -z "$TARGET_DIR" ]; then
+  export TARGET_DIR="$(mktemp -d)"
+fi
 
 cp -pR --parents $(cat release/files_common release/files_tici) $TARGET_DIR/
 

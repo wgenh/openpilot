@@ -3,13 +3,13 @@ import json
 import os
 from pathlib import Path
 import shutil
-import subprocess
 from markdown_it import MarkdownIt
 import requests
 
 from openpilot.common.basedir import BASEDIR
 from openpilot.common.params import Params
 from openpilot.common.swaglog import cloudlog
+from openpilot.selfdrive.updated.common import get_version, get_release_notes, get_git_branch, run
 from openpilot.selfdrive.updated.tests.test_base import get_consistent_flag
 from openpilot.selfdrive.updated.updated import UserRequest, WaitTimeHelper, handle_agnos_update
 from openpilot.system.hardware import AGNOS
@@ -36,13 +36,33 @@ CASYNC_ARGS = ["--with=symlinks"]
 
 CHANNEL_MANIFEST_FILE = "channel.json" # file that contains details of the current release
 
+def manifest_from_git(path: str) -> dict | None:
+  branch = get_git_branch(path)
+  version = get_version(path)
+  release_notes = get_release_notes(path)
+
+  return {
+    "name": branch,
+    "openpilot": {
+      "version": version,
+      "release_notes": release_notes
+    }
+  }
+
 
 def read_manifest(path: str = BASEDIR) -> dict | None:
   try:
     with open(Path(path) / CHANNEL_MANIFEST_FILE) as f:
       return dict(json.load(f))
   except Exception:
-    return None
+    pass
+
+  try:
+    return manifest_from_git(path)
+  except Exception:
+    pass
+
+  return None
 
 
 def set_consistent_flag(consistent: bool) -> None:
@@ -62,7 +82,7 @@ class UpdaterState(StrEnum):
   FINALIZING = "finalizing update..."
 
 
-def set_status_params(state: UpdaterState = UpdaterState.CHECKING, update_available = False, update_ready = False):
+def set_status_params(state: UpdaterState, update_available = False, update_ready = False):
   params = Params()
   params.put("UpdaterState", state)
   params.put_bool("UpdaterFetchAvailable", update_available)
@@ -92,12 +112,6 @@ def check_update_available(current_directory, other_manifest):
          get_digest(current_directory) != other_manifest["casync"]["digest"]
 
 
-def run(cmd: list[str], cwd: str = None, env = None) -> str:
-  if env is None:
-    env = os.environ
-  return subprocess.check_output(cmd, cwd=cwd, stderr=subprocess.STDOUT, encoding='utf8', env=env)
-
-
 def download_update(manifest):
   cloudlog.info("")
   env = os.environ.copy()
@@ -121,7 +135,7 @@ def finalize_update():
 
 def main():
   params = Params()
-  set_status_params()
+  set_status_params(UpdaterState.CHECKING)
 
   current_manifest = read_manifest(BASEDIR)
   params.put("UpdaterTargetBranch", current_manifest["name"])

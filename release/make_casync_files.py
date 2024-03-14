@@ -21,7 +21,7 @@ def get_exclude_set(path) -> set[str]:
 
 
 if __name__ == "__main__":
-  parser = argparse.ArgumentParser(description="Generate a .caexclude file")
+  parser = argparse.ArgumentParser(description="Generate extra required files for a casync release")
   parser.add_argument("path", type=str, help="path to generate caexclude from")
   parser.add_argument("channel", type=str, help="what channel this build is")
   args = parser.parse_args()

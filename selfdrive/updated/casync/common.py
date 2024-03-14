@@ -56,7 +56,7 @@ def create_manifest_file(path: pathlib.Path, channel: str):
     f.write(json.dumps(create_manifest(channel, version, release_notes)))
 
 
-def create_casync_release(output_dir: pathlib.Path, target_dir: pathlib.Path, release: str):
+def create_casync_release(target_dir: pathlib.Path, output_dir: pathlib.Path, release: str):
   caidx_file = output_dir / f"{release}.caidx"
   run(["casync", "make", *CASYNC_ARGS, caidx_file, target_dir])
   digest = run(["casync", "digest", *CASYNC_ARGS, target_dir]).decode("utf-8").strip()

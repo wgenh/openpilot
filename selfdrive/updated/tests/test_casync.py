@@ -60,7 +60,7 @@ class TestUpdateDCASyncStrategy(BaseUpdateTest):
   def update_remote_release(self, release):
     update_release(self.remote_dir, release, *self.MOCK_RELEASES[release])
     create_casync_files(self.remote_dir, release, *self.MOCK_RELEASES[release])
-    self.release_digests[release] = create_casync_release(self.casync_dir, self.remote_dir, release)[0]
+    self.release_digests[release] = create_casync_release(self.remote_dir, self.casync_dir, release)[0]
 
   def setup_remote_release(self, release):
     self.update_remote_release(release)

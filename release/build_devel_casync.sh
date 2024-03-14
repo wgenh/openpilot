@@ -15,6 +15,8 @@ if [ -z "$TARGET_DIR" ]; then
   export TARGET_DIR="$(mktemp -d)"
 fi
 
+mkdir -p $TARGET_DIR
+
 cp -pR --parents $(cat release/files_common release/files_tici) $TARGET_DIR/
 
 release/casync_release.py $TARGET_DIR $CASYNC_DIR $RELEASE_CHANNEL

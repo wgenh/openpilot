@@ -1,140 +1,177 @@
+from enum import StrEnum
 import json
 import os
 from pathlib import Path
 import shutil
+import subprocess
+from markdown_it import MarkdownIt
 import requests
+
 from openpilot.common.basedir import BASEDIR
-from openpilot.selfdrive.updated.common import FINALIZED, STAGING_ROOT, UpdateStrategy, \
-                                               get_consistent_flag, get_release_notes, get_version, run, set_consistent_flag
+from openpilot.common.params import Params
 from openpilot.common.swaglog import cloudlog
-from openpilot.selfdrive.updated.git import OVERLAY_INIT, GitUpdateStrategy
+from openpilot.selfdrive.updated.tests.test_base import get_consistent_flag
+from openpilot.selfdrive.updated.updated import UserRequest, WaitTimeHelper
 
+UPDATE_DELAY = 60
+CHANNELS_API_ROOT = "openpilot/channels"
 
-CHANNEL_PATH = "https://commadist.blob.core.windows.net/openpilot-channels"
+API_HOST = os.getenv('API_HOST', 'https://api.commadotai.com')
 
-CHANNELS = {
-  "test1": "test1",
-  "test2": "test2",
-}
+def get_available_channels():
+  return requests.get(f"{API_HOST}/{CHANNELS_API_ROOT}").json()
 
-CASYNC_PATH = Path(STAGING_ROOT) / "casync"
-CASYNC_TMPDIR = Path(STAGING_ROOT) / "casync_tmp"
+def get_remote_manifest(channel):
+  return requests.get(f"{API_HOST}/{CHANNELS_API_ROOT}/{channel}").json()
+
+LOCK_FILE = os.getenv("UPDATER_LOCK_FILE", "/tmp/safe_staging_overlay.lock")
+STAGING_ROOT = os.getenv("UPDATER_STAGING_ROOT", "/data/safe_staging")
+
+CASYNC_PATH = Path(STAGING_ROOT) / "casync"        # where the casync update is pulled
+CASYNC_TMPDIR = Path(STAGING_ROOT) / "casync_tmp"  # working directory for casync temp files
+FINALIZED = os.path.join(STAGING_ROOT, "finalized")
 
 CASYNC_ARGS = ["--with=symlinks"]
 
+CHANNEL_MANIFEST_FILE = "channel.json" # file that contains details of the current release
 
-RELEASE_METADATA_FILE = "openpilot-release.json"
 
-
-def read_release_metadata(path: str = BASEDIR) -> dict | None:
+def read_manifest(path: str = BASEDIR) -> dict | None:
   try:
-    with open(Path(path) / RELEASE_METADATA_FILE) as f:
+    with open(Path(path) / CHANNEL_MANIFEST_FILE) as f:
       return dict(json.load(f))
   except Exception:
     return None
 
 
-class CASyncUpdateStrategy(UpdateStrategy):
-  def init(self):
-    run(["sudo", "rm", "-rf", STAGING_ROOT])
-    if os.path.isdir(STAGING_ROOT):
-      shutil.rmtree(STAGING_ROOT)
+def set_consistent_flag(consistent: bool) -> None:
+  os.sync()
+  consistent_file = Path(os.path.join(FINALIZED, ".overlay_consistent"))
+  if consistent:
+    consistent_file.touch()
+  elif not consistent:
+    consistent_file.unlink(missing_ok=True)
+  os.sync()
 
-    for dirname in [STAGING_ROOT, CASYNC_PATH]:
-      os.mkdir(dirname, 0o755)
 
-    OVERLAY_INIT.touch()
+class UpdaterState(StrEnum):
+  IDLE = "idle"
+  CHECKING = "checking..."
+  DOWNLOADING = "downloading..."
+  FINALIZING = "finalizing update..."
 
-  def get_available_channels(self) -> list[str]:
-    return list(CHANNELS.keys())
 
-  def get_digest_local(self, path: str) -> str:
-    return run(["casync", "digest", *CASYNC_ARGS, path]).strip()
+def set_status_params(state: UpdaterState = UpdaterState.CHECKING, update_available = False, update_ready = False):
+  params = Params()
+  params.put("UpdaterState", state)
+  params.put_bool("UpdaterFetchAvailable", update_available)
+  params.put_bool("UpdateAvailable", update_ready)
 
-  def get_digest_remote(self, channel: str) -> str:
-    return requests.get(f"{CHANNEL_PATH}/{channel}.digest").text.strip()
 
-  def get_channel(self, path: str) -> str:
-    release_metadata = read_release_metadata(path)
+def set_channel_params(name, manifest):
+  params = Params()
+  params.put(f"Updater{name}Description", f'{manifest["openpilot"]["version"]} / {manifest["name"]}')
+  params.put(f"Updater{name}ReleaseNotes", bytes(MarkdownIt().render(manifest["openpilot"]["release_notes"]), encoding="utf-8"))
 
-    if release_metadata is not None:
-      return str(release_metadata["channel"])
 
-    cloudlog.exception("failed to get channel from release metadata, trying to get channel from git...")
+def set_current_channel_params(manifest):
+  set_channel_params("Current", manifest)
 
-    try:
-      return GitUpdateStrategy.get_branch(path)
-    except Exception:
-      cloudlog.exception("casync.get_channel git")
 
-    raise Exception("unable to determine channel...")
+def set_new_channel_params(manifest):
+  set_channel_params("New", manifest)
 
-  def current_channel(self) -> str:
-    return self.get_channel(str(BASEDIR))
 
-  def update_ready(self) -> bool:
-    if get_consistent_flag():
-      return self.get_digest_local(FINALIZED) != self.get_digest_local(BASEDIR)
-    return False
+def get_digest(directory) -> str | None:
+  return str(run(["casync", "digest", *CASYNC_ARGS, directory])).strip()
 
-  def update_available(self) -> bool:
-    remote_digest = self.get_digest_remote(self.target_channel)
 
-    if CASYNC_PATH.exists() and len(list(CASYNC_PATH.rglob("*"))) > 1:
-      return self.get_digest_local(str(CASYNC_PATH)) != remote_digest
+def check_update_available(current_directory, other_manifest):
+  return read_manifest(current_directory)["name"] != other_manifest["name"] or \
+         get_digest(current_directory) != other_manifest["casync"]["digest"]
 
-    return self.get_digest_local(str(BASEDIR)) != remote_digest
 
-  def describe_channel(self, path):
-    if not os.path.exists(path):
-      return ""
+def run(cmd: list[str], cwd: str = None, env = None) -> str:
+  if env is None:
+    env = os.environ
+  return subprocess.check_output(cmd, cwd=cwd, stderr=subprocess.STDOUT, encoding='utf8', env=env)
 
-    version = ""
-    channel = ""
-    try:
-      channel = self.get_channel(path)
-      version = get_version(path)
-    except Exception:
-      cloudlog.exception("casync.describe_channel")
-    return f"{version} / {channel}"
 
-  def release_notes(self, path):
-    try:
-      return get_release_notes(path)
-    except Exception:
-      cloudlog.exception("casync.release_notes")
-      return ""
+def download_update(manifest):
+  cloudlog.info("")
+  env = os.environ.copy()
+  env["TMPDIR"] = str(CASYNC_TMPDIR)
+  CASYNC_TMPDIR.mkdir(exist_ok=True)
+  CASYNC_PATH.mkdir(exist_ok=True)
+  run(["casync", "extract", manifest["casync"]["caidx"], str(CASYNC_PATH), f"--seed={BASEDIR}", *CASYNC_ARGS], env=env)
 
-  def describe_current_channel(self) -> tuple[str, str]:
-    return self.describe_channel(BASEDIR), self.release_notes(BASEDIR)
 
-  def describe_ready_channel(self) -> tuple[str, str]:
-    if self.update_ready():
-      return self.describe_channel(FINALIZED), self.release_notes(FINALIZED)
-    return "", ""
+def finalize_update():
+  # Remove the update ready flag and any old updates
+  cloudlog.info("creating finalized version of the overlay")
+  set_consistent_flag(False)
 
-  def fetch_update(self) -> None:
-    cloudlog.info("attempting a casync update inside staging path")
-    env = os.environ.copy()
-    env["TMPDIR"] = str(CASYNC_TMPDIR)
-    CASYNC_TMPDIR.mkdir(exist_ok=True)
-    run(["casync", "extract", f"{CHANNEL_PATH}/{self.target_channel}.caidx", str(CASYNC_PATH) , f"--seed={BASEDIR}", *CASYNC_ARGS], env=env)
+  # Copy the merged overlay view and set the update ready flag
+  if os.path.exists(FINALIZED):
+    shutil.rmtree(FINALIZED)
+  shutil.copytree(CASYNC_PATH, FINALIZED, symlinks=True)
 
-  def fetched_path(self) -> str:
-    return str(CASYNC_PATH)
+  set_consistent_flag(True)
+  cloudlog.info("done finalizing overlay")
 
-  def finalize_update(self) -> None:
-    # Remove the update ready flag and any old updates
-    cloudlog.info("creating finalized version of the overlay")
-    set_consistent_flag(False)
 
-    # Copy the merged overlay view and set the update ready flag
-    if os.path.exists(FINALIZED):
-      shutil.rmtree(FINALIZED)
-    shutil.copytree(CASYNC_PATH, FINALIZED, symlinks=True)
+def main():
+  params = Params()
+  set_status_params()
 
-    set_consistent_flag(True)
-    cloudlog.info("done finalizing overlay")
+  current_manifest = read_manifest(BASEDIR)
+  params.put("UpdaterTargetBranch", current_manifest["name"])
 
-  def cleanup(self):
-    pass
+  wait_helper = WaitTimeHelper()
+
+  while True:
+    wait_helper.ready_event.clear()
+
+    target_channel = params.get("UpdaterTargetBranch", encoding='utf8')
+
+    user_requested_check = wait_helper.user_request == UserRequest.CHECK
+
+    set_status_params(UpdaterState.CHECKING)
+
+    update_ready = get_consistent_flag(FINALIZED)
+
+    current_manifest = read_manifest(BASEDIR)
+
+    set_current_channel_params(current_manifest)
+
+    remote_manifest = get_remote_manifest(target_channel)
+
+    update_available = check_update_available(BASEDIR, remote_manifest)
+
+    if update_ready and not check_update_available(FINALIZED, remote_manifest):
+      update_available = False
+
+    set_status_params(UpdaterState.IDLE, update_available, update_ready)
+
+    if update_available:
+      if user_requested_check:
+        cloudlog.info("skipping fetch, only checking")
+      else:
+        update_available = False
+        set_status_params(UpdaterState.DOWNLOADING)
+        download_update(remote_manifest)
+
+        set_status_params(UpdaterState.FINALIZING)
+        finalize_update()
+        new_manifest = read_manifest(FINALIZED)
+        set_new_channel_params(new_manifest)
+        update_ready = get_consistent_flag(FINALIZED)
+
+    set_status_params(UpdaterState.IDLE, update_available, update_ready)
+
+    wait_helper.user_request = UserRequest.NONE
+    wait_helper.sleep(UPDATE_DELAY)
+
+
+if __name__ == "__main__":
+  main()

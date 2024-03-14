@@ -6,7 +6,7 @@ import pathlib
 
 from asyncio import subprocess
 
-from openpilot.selfdrive.test.helpers import DirectoryHttpServer, http_server_context
+from openpilot.selfdrive.test.helpers import DirectoryHttpServer, http_server_context, processes_context
 from openpilot.selfdrive.updated.tests.test_base import BaseUpdateTest, run, update_release
 
 
@@ -101,3 +101,21 @@ class TestUpdateDCASyncStrategy(BaseUpdateTest):
       with http_server_context(OpenpilotChannelMockAPI(self.release_digests, self.MOCK_RELEASES, casync_base)) as (api_host, api_port):
         os.environ["API_HOST"] = f"http://{api_host}:{api_port}"
         yield
+
+  def setup_git_basedir_release(self, release):
+    super().setup_basedir_release(release)
+    run(["git", "init"], cwd=self.basedir)
+    run(["git", "checkout", "-b", release], cwd=self.basedir)
+    update_release(self.basedir, release, *self.MOCK_RELEASES[release])
+    run(["git", "add", "."], cwd=self.basedir)
+    run(["git", "commit", "-m", f"openpilot release {release}"], cwd=self.basedir)
+
+  def test_recover_from_git_update(self):
+    # starts off on a git update, ensures we can recover and install the correct update
+    self.setup_git_basedir_release("release3")
+    self.setup_remote_release("release3")
+
+    with self.additional_context(), processes_context(["updated"]) as [_]:
+      self._test_params("release3", False, False)
+      self.wait_for_idle()
+      self._test_params("release3", False, True)

@@ -19,11 +19,20 @@ CHANNELS_API_ROOT = "openpilot/channels"
 
 API_HOST = os.getenv('API_HOST', 'https://api.commadotai.com')
 
-def get_available_channels():
-  return requests.get(f"{API_HOST}/{CHANNELS_API_ROOT}").json()
+def get_available_channels() -> list | None:
+  try:
+    return list(requests.get(f"{API_HOST}/{CHANNELS_API_ROOT}").json())
+  except Exception:
+    cloudlog.exception("fetching remote channels")
+    return None
 
-def get_remote_manifest(channel):
-  return requests.get(f"{API_HOST}/{CHANNELS_API_ROOT}/{channel}").json()
+def get_remote_manifest(channel) -> dict | None:
+  try:
+    return dict(requests.get(f"{API_HOST}/{CHANNELS_API_ROOT}/{channel}").json())
+  except Exception:
+    cloudlog.exception("fetching remote manifest failed")
+    return None
+
 
 LOCK_FILE = os.getenv("UPDATER_LOCK_FILE", "/tmp/safe_staging_overlay.lock")
 STAGING_ROOT = os.getenv("UPDATER_STAGING_ROOT", "/data/safe_staging")
@@ -55,12 +64,12 @@ def read_manifest(path: str = BASEDIR) -> dict | None:
     with open(Path(path) / CHANNEL_MANIFEST_FILE) as f:
       return dict(json.load(f))
   except Exception:
-    pass
+    cloudlog.exception("reading channel manifest failed")
 
   try:
     return manifest_from_git(path)
   except Exception:
-    pass
+    cloudlog.exception("reading git manifest failed")
 
   return None
 
@@ -137,23 +146,23 @@ def main():
   params = Params()
   set_status_params(UpdaterState.CHECKING)
 
-  current_manifest = read_manifest(BASEDIR)
-  params.put("UpdaterTargetBranch", current_manifest["name"])
-
   wait_helper = WaitTimeHelper()
 
   while True:
     wait_helper.ready_event.clear()
 
     target_channel = params.get("UpdaterTargetBranch", encoding='utf8')
+    current_manifest = read_manifest(BASEDIR)
+
+    if target_channel is None:
+      target_channel = current_manifest["name"]
+      params.put("UpdaterTargetBranch", target_channel)
 
     user_requested_check = wait_helper.user_request == UserRequest.CHECK
 
     set_status_params(UpdaterState.CHECKING)
 
     update_ready = get_consistent_flag(FINALIZED)
-
-    current_manifest = read_manifest(BASEDIR)
 
     set_current_channel_params(current_manifest)
 
@@ -182,6 +191,7 @@ def main():
         new_manifest = read_manifest(FINALIZED)
         set_new_channel_params(new_manifest)
         update_ready = get_consistent_flag(FINALIZED)
+
 
     set_status_params(UpdaterState.IDLE, update_available, update_ready)
 

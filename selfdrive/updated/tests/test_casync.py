@@ -119,3 +119,5 @@ class TestUpdateDCASyncStrategy(BaseUpdateTest):
       self._test_params("release3", False, False)
       self.wait_for_idle()
       self._test_params("release3", False, True)
+
+      self._test_finalized_update("release3", *self.MOCK_RELEASES["release3"])

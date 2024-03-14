@@ -9,6 +9,7 @@ import requests
 from openpilot.common.basedir import BASEDIR
 from openpilot.common.params import Params
 from openpilot.common.swaglog import cloudlog
+from openpilot.selfdrive.updated.casync.common import CASYNC_ARGS, CHANNEL_MANIFEST_FILE
 from openpilot.selfdrive.updated.common import get_version, get_release_notes, get_git_branch, run
 from openpilot.selfdrive.updated.tests.test_base import get_consistent_flag
 from openpilot.selfdrive.updated.updated import UserRequest, WaitTimeHelper, handle_agnos_update
@@ -40,10 +41,6 @@ STAGING_ROOT = os.getenv("UPDATER_STAGING_ROOT", "/data/safe_staging")
 CASYNC_PATH = Path(STAGING_ROOT) / "casync"        # where the casync update is pulled
 CASYNC_TMPDIR = Path(STAGING_ROOT) / "casync_tmp"  # working directory for casync temp files
 FINALIZED = os.path.join(STAGING_ROOT, "finalized")
-
-CASYNC_ARGS = ["--with=symlinks"]
-
-CHANNEL_MANIFEST_FILE = "channel.json" # file that contains details of the current release
 
 def manifest_from_git(path: str) -> dict | None:
   branch = get_git_branch(path)

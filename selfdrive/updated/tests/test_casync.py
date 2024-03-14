@@ -5,9 +5,8 @@ import os
 import pathlib
 
 from openpilot.selfdrive.test.helpers import DirectoryHttpServer, http_server_context, processes_context
-from openpilot.selfdrive.updated.casync import CHANNEL_MANIFEST_FILE
+from openpilot.selfdrive.updated.casync.common import CHANNEL_MANIFEST_FILE, create_caexclude_file, create_casync_release, create_manifest
 from openpilot.selfdrive.updated.tests.test_base import BaseUpdateTest, run, update_release
-from release.casync_release import create_caexclude_file, create_casync_release, create_manifest
 
 
 CASYNC_ARGS = ["--with=symlinks"]
@@ -24,7 +23,8 @@ def create_remote_manifest(release, version, agnos_version, release_notes, casyn
 
   return manifest
 
-def create_casync_files(dirname, release, version, agnos_version, release_notes):
+
+def create_casync_files(dirname, release, version, agnos_release, release_notes):
   create_caexclude_file(pathlib.Path(dirname))
 
   with open(pathlib.Path(dirname) / CHANNEL_MANIFEST_FILE, "w") as f:

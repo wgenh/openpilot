@@ -76,7 +76,7 @@ jobs:
     - uses: ./.github/workflows/setup-with-retry
     - name: Build devel
       timeout-minutes: 1
-      run: ${{ env.RUN }} TARGET_DIR=$STRIPPED_DIR release/build_devel_casync.sh master
+      run: ${{ env.RUN }} "TARGET_DIR=$STRIPPED_DIR release/build_devel_casync.sh master"
 
   build:
     strategy:

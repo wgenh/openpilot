@@ -11,7 +11,8 @@ from openpilot.common.basedir import BASEDIR
 from openpilot.common.params import Params
 from openpilot.common.swaglog import cloudlog
 from openpilot.selfdrive.updated.tests.test_base import get_consistent_flag
-from openpilot.selfdrive.updated.updated import UserRequest, WaitTimeHelper
+from openpilot.selfdrive.updated.updated import UserRequest, WaitTimeHelper, handle_agnos_update
+from openpilot.system.hardware import AGNOS
 
 UPDATE_DELAY = 60
 CHANNELS_API_ROOT = "openpilot/channels"
@@ -107,11 +108,9 @@ def download_update(manifest):
 
 
 def finalize_update():
-  # Remove the update ready flag and any old updates
   cloudlog.info("creating finalized version of the overlay")
   set_consistent_flag(False)
 
-  # Copy the merged overlay view and set the update ready flag
   if os.path.exists(FINALIZED):
     shutil.rmtree(FINALIZED)
   shutil.copytree(CASYNC_PATH, FINALIZED, symlinks=True)
@@ -160,6 +159,9 @@ def main():
         update_available = False
         set_status_params(UpdaterState.DOWNLOADING)
         download_update(remote_manifest)
+
+        if AGNOS:
+          handle_agnos_update(CASYNC_PATH)
 
         set_status_params(UpdaterState.FINALIZING)
         finalize_update()

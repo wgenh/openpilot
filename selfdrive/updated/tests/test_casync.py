@@ -4,28 +4,18 @@ import json
 import os
 import pathlib
 
-from asyncio import subprocess
-
 from openpilot.selfdrive.test.helpers import DirectoryHttpServer, http_server_context, processes_context
+from openpilot.selfdrive.updated.casync import CHANNEL_MANIFEST_FILE
 from openpilot.selfdrive.updated.tests.test_base import BaseUpdateTest, run, update_release
+from release.casync_release import create_caexclude_file, create_casync_release, create_manifest
 
 
 CASYNC_ARGS = ["--with=symlinks"]
 
 
 
-def create_manifest(release, version, agnos_version, release_notes):
-  return {
-    "name": release,
-    "openpilot": {
-      "version": version,
-      "release_notes": release_notes
-    }
-  }
-
-
 def create_remote_manifest(release, version, agnos_version, release_notes, casync_caidx, casync_digest):
-  manifest = create_manifest(release, version, agnos_version, release_notes)
+  manifest = create_manifest(release, version, release_notes)
 
   manifest["casync"] = {
     "caidx": casync_caidx,
@@ -35,23 +25,10 @@ def create_remote_manifest(release, version, agnos_version, release_notes, casyn
   return manifest
 
 def create_casync_files(dirname, release, version, agnos_version, release_notes):
-  with open(pathlib.Path(dirname) / ".caexclude", "w") as f:
-    f.write("*\n")
-    f.write("!channel.json\n")
-    f.write("!RELEASES.md\n")
-    f.write("!common\n")
-    f.write("!common/version.h\n")
-    f.write("!launch_env.sh\n")
-    f.write("!test_symlink\n")
+  create_caexclude_file(pathlib.Path(dirname))
 
-  with open(pathlib.Path(dirname) / "channel.json", "w") as f:
-    json.dump(create_manifest(release, version, agnos_version, release_notes), f)
-
-
-def create_casync_release(casync_dir, release, remote_dir):
-  run(["casync", "make", *CASYNC_ARGS, casync_dir / f"{release}.caidx", remote_dir])
-  digest = run(["casync", "digest", *CASYNC_ARGS, remote_dir], stdout=subprocess.PIPE).stdout.decode().strip()
-  return digest
+  with open(pathlib.Path(dirname) / CHANNEL_MANIFEST_FILE, "w") as f:
+    json.dump(create_manifest(release, version, release_notes), f)
 
 
 def OpenpilotChannelMockAPI(release_digests, mock_releases, casync_base):
@@ -83,7 +60,7 @@ class TestUpdateDCASyncStrategy(BaseUpdateTest):
   def update_remote_release(self, release):
     update_release(self.remote_dir, release, *self.MOCK_RELEASES[release])
     create_casync_files(self.remote_dir, release, *self.MOCK_RELEASES[release])
-    self.release_digests[release] = create_casync_release(self.casync_dir, release, self.remote_dir)
+    self.release_digests[release] = create_casync_release(self.casync_dir, self.remote_dir, release)[0]
 
   def setup_remote_release(self, release):
     self.update_remote_release(release)

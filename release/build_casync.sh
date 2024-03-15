@@ -2,18 +2,17 @@
 
 set -ex
 
-CASYNC_DIR=/tmp/casync
 RELEASE_CHANNEL=$1
-
-mkdir -p $CASYNC_DIR
 
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null && pwd)"
 
+CASYNC_DIR="${CASYNC_DIR:=/tmp/casync}"
 export SOURCE_DIR="$(git -C $DIR rev-parse --show-toplevel)"
-if [ -z "$TARGET_DIR" ]; then
-  export TARGET_DIR="$(mktemp -d)"
-fi
+export TARGET_DIR="${TARGET_DIR:=$(mktemp -d)}"
 
+echo "Creating casync release from $SOURCE_DIR to $TARGET_DIR with caidx file in $CASYNC_DIR"
+
+mkdir -p $CASYNC_DIR
 mkdir -p $TARGET_DIR
 
 cp -pR --parents $(cat release/files_*) $TARGET_DIR/

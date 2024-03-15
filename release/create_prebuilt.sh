@@ -8,6 +8,8 @@ SOURCE_DIR=$2
 rm -f panda/board/obj/panda.bin.signed
 rm -f panda/board/obj/panda_h7.bin.signed
 
+cd $TARGET_DIR
+
 VERSION=$(cat common/version.h | awk -F[\"-]  '{print $2}')
 echo "#define COMMA_VERSION \"$VERSION-release\"" > common/version.h
 

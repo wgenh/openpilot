@@ -9,10 +9,6 @@ from openpilot.selfdrive.updated.casync.common import CHANNEL_MANIFEST_FILE, cre
 from openpilot.selfdrive.updated.tests.test_base import BaseUpdateTest, run, update_release
 
 
-CASYNC_ARGS = ["--with=symlinks"]
-
-
-
 def create_remote_manifest(release, version, agnos_version, release_notes, casync_caidx, casync_digest):
   manifest = create_manifest(release, version, release_notes)
 

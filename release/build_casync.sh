@@ -2,8 +2,6 @@
 
 set -ex
 
-RELEASE_CHANNEL=$1
-
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null && pwd)"
 
 CASYNC_DIR="${CASYNC_DIR:=/tmp/casync}"

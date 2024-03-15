@@ -175,6 +175,14 @@ node {
       ])
     }
 
+    //if (env.BRANCH_NAME == 'master') {
+      // master channel
+      deviceState("build master", "tici-needs-can", [], [
+        ["build master", "TARGET_DIR=/data/releasepilot CASYNC_DIR=/data/casync RELEASE_CHANNEL=master $SOURCE_DIR/release/build_casync.sh"],
+        //["upload master", "RELEASE_CHANNEL=master $SOURCE_DIR/release/upload_casync_channel.sh"],
+      ])
+    //}
+
     if (!env.BRANCH_NAME.matches(excludeRegex)) {
     parallel (
       // tici tests

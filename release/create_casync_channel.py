@@ -16,8 +16,8 @@ if __name__ == "__main__":
   target_dir = pathlib.Path(args.target_dir)
   output_dir = pathlib.Path(args.output_dir)
 
-  create_caexclude_file(target_dir)
   create_manifest_file(target_dir, args.channel)
+  create_caexclude_file(target_dir)
 
   digest, caidx = create_casync_release(target_dir, output_dir, args.channel)
 

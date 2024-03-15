@@ -2,7 +2,7 @@ import json
 import pathlib
 import subprocess
 
-from openpilot.selfdrive.updated.common import get_release_notes, get_version
+from openpilot.system.updated.common import get_release_notes, get_version
 
 
 CASYNC_ARGS = ["--with=symlinks"]

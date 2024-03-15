@@ -3,7 +3,7 @@
 import argparse
 import pathlib
 
-from openpilot.selfdrive.updated.casync.common import create_caexclude_file, create_casync_release, create_manifest_file
+from openpilot.system.updated.casync.common import create_caexclude_file, create_casync_release, create_manifest_file
 
 
 if __name__ == "__main__":

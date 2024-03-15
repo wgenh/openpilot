@@ -175,16 +175,17 @@ node {
       ])
     }
 
-    //if (env.BRANCH_NAME == 'master') {
-      // master channel
-      deviceStage("build master", "tici-needs-can", [], [
-        ["build master", "TARGET_DIR=/data/releasepilot CASYNC_DIR=/data/casync RELEASE_CHANNEL=master $SOURCE_DIR/release/build_casync.sh"],
-        //["upload master", "RELEASE_CHANNEL=master $SOURCE_DIR/release/upload_casync_channel.sh"],
-      ])
-    //}
-
     if (!env.BRANCH_NAME.matches(excludeRegex)) {
     parallel (
+      'release builds': {
+        if (env.BRANCH_NAME == 'master') {
+          // master channel
+          deviceStage("master channel", "tici-needs-can", [], [
+            ["build master", "TARGET_DIR=/data/releasepilot CASYNC_DIR=/data/casync RELEASE_CHANNEL=master $SOURCE_DIR/release/build_casync.sh"],
+            //["upload master", "RELEASE_CHANNEL=master $SOURCE_DIR/release/upload_casync_channel.sh"],
+          ])
+        }
+      },
       // tici tests
       'onroad tests': {
         deviceStage("onroad", "tici-needs-can", [], [

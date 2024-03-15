@@ -2,10 +2,10 @@ import json
 import pathlib
 import subprocess
 
-from openpilot.selfdrive.updated.common import get_release_notes, get_version
+from openpilot.system.updated.common import get_release_notes, get_version
 
 
-CASYNC_ARGS = ["--with=symlinks"]
+CASYNC_ARGS = ["--with=symlinks", "--with=permissions"]
 CHANNEL_MANIFEST_FILE = "channel.json" # file that contains details of the current release
 CASYNC_FILES = [CHANNEL_MANIFEST_FILE, ".caexclude"]
 
@@ -30,8 +30,9 @@ def get_exclude_set(path) -> set[str]:
 
 def create_caexclude_file(path: pathlib.Path):
   with open(path / ".caexclude", "w") as f:
-    f.write("*\n") # exclude everything except the paths already in the release
-    f.write(".*\n") # exclude everything except the paths already in the release
+    # exclude everything except the paths already in the release
+    f.write("*\n")
+    f.write(".*\n")
 
     for file in sorted(get_exclude_set(path)):
       f.write(f"!{file}\n")

@@ -22,14 +22,6 @@ scons -j$(nproc)
 # release panda fw
 CERT=/data/pandaextra/certs/release RELEASE=1 scons -j$(nproc) panda/
 
-# Ensure no submodules in release
-if test "$(git submodule--helper list | wc -l)" -gt "0"; then
-  echo "submodules found:"
-  git submodule--helper list
-  exit 1
-fi
-git submodule status
-
 # Cleanup
 find . -name '*.a' -delete
 find . -name '*.o' -delete

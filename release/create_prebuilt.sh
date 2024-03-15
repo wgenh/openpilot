@@ -1,6 +1,6 @@
 #!/usr/bin/bash -e
 
-# run's on tici to create a prebuilt version of a release
+# runs on tici to create a prebuilt version of a release
 
 set -ex
 

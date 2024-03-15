@@ -170,22 +170,23 @@ node {
     }
 
     if (env.BRANCH_NAME == 'master-ci') {
-      deviceStage("build nightly", "tici-needs-can", [], [
-        ["build nightly", "RELEASE_BRANCH=nightly $SOURCE_DIR/release/build_release.sh"],
-      ])
-    }
-
-    if (!env.BRANCH_NAME.matches(excludeRegex)) {
-    parallel (
-      'release builds': {
-        if (env.BRANCH_NAME == 'master') {
-          // master channel
-          deviceStage("master channel", "tici-needs-can", [], [
+      parallel (
+        'git release': {
+          deviceStage("build git", "tici-needs-can", [], [
+            ["build nightly", "RELEASE_BRANCH=nightly $SOURCE_DIR/release/build_release.sh"],
+          ])
+        }
+        'casync release': {
+          deviceStage("build casync", "tici-needs-can", [], [
             ["build master", "TARGET_DIR=/data/releasepilot CASYNC_DIR=/data/casync RELEASE_CHANNEL=master $SOURCE_DIR/release/build_casync.sh"],
             //["upload master", "RELEASE_CHANNEL=master $SOURCE_DIR/release/upload_casync_channel.sh"],
           ])
         }
-      },
+      )
+    }
+
+    if (!env.BRANCH_NAME.matches(excludeRegex)) {
+    parallel (
       // tici tests
       'onroad tests': {
         deviceStage("onroad", "tici-needs-can", [], [

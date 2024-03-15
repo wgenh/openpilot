@@ -5,7 +5,7 @@ import subprocess
 from openpilot.system.updated.common import get_release_notes, get_version
 
 
-CASYNC_ARGS = ["--with=symlinks"]
+CASYNC_ARGS = ["--with=symlinks", "--with=permissions"]
 CHANNEL_MANIFEST_FILE = "channel.json" # file that contains details of the current release
 CASYNC_FILES = [CHANNEL_MANIFEST_FILE, ".caexclude"]
 

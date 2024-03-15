@@ -39,6 +39,7 @@ cd $SOURCE_DIR
 cp -pR --parents $(cat release/files_common) $BUILD_DIR/
 cp -pR --parents $(cat $FILES_SRC) $BUILD_DIR/
 
+echo "[-] creating prebuilt T=$SECONDS"
 release/create_prebuilt.sh $BUILD_DIR
 
 cd $BUILD_DIR

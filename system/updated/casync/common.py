@@ -30,8 +30,9 @@ def get_exclude_set(path) -> set[str]:
 
 def create_caexclude_file(path: pathlib.Path):
   with open(path / ".caexclude", "w") as f:
-    f.write("*\n") # exclude everything except the paths already in the release
-    f.write(".*\n") # exclude everything except the paths already in the release
+    # exclude everything except the paths already in the release
+    f.write("*\n")
+    f.write(".*\n")
 
     for file in sorted(get_exclude_set(path)):
       f.write(f"!{file}\n")

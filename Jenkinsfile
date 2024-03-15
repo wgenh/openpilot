@@ -175,7 +175,7 @@ node {
           deviceStage("build git", "tici-needs-can", [], [
             ["build nightly", "RELEASE_BRANCH=nightly $SOURCE_DIR/release/build_release.sh"],
           ])
-        }
+        },
         'casync release': {
           deviceStage("build casync", "tici-needs-can", [], [
             ["build master", "TARGET_DIR=/data/releasepilot CASYNC_DIR=/data/casync RELEASE_CHANNEL=master $SOURCE_DIR/release/build_casync.sh"],

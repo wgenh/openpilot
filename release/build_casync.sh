@@ -13,6 +13,7 @@ export TARGET_DIR="${TARGET_DIR:=$(mktemp -d)}"
 echo "Creating casync release from $SOURCE_DIR to $TARGET_DIR with caidx file in $CASYNC_DIR"
 
 mkdir -p $CASYNC_DIR
+rm -rf $TARGET_DIR
 mkdir -p $TARGET_DIR
 
 cp -pR --parents $(cat release/files_*) $TARGET_DIR/

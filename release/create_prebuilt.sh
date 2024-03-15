@@ -5,7 +5,6 @@
 set -ex
 
 TARGET_DIR=$1
-SOURCE_DIR=$2
 
 rm -f panda/board/obj/panda.bin.signed
 rm -f panda/board/obj/panda_h7.bin.signed

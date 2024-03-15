@@ -14,7 +14,8 @@ mkdir -p $CASYNC_DIR
 rm -rf $TARGET_DIR
 mkdir -p $TARGET_DIR
 
+cd $SOURCE_DIR
 cp -pR --parents $(cat release/files_*) $TARGET_DIR/
 
-release/create_prebuilt.sh $TARGET_DIR $SOURCE_DIR
+release/create_prebuilt.sh $TARGET_DIR
 release/create_casync_channel.py $TARGET_DIR $CASYNC_DIR $RELEASE_CHANNEL

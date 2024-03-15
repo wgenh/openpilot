@@ -2,6 +2,8 @@
 
 # run's on tici to create a prebuilt version of a release
 
+set -ex
+
 TARGET_DIR=$1
 SOURCE_DIR=$2
 
@@ -29,9 +31,6 @@ find . -name 'moc_*' -delete
 find . -name '__pycache__' -delete
 rm -rf .sconsign.dblite Jenkinsfile release/
 rm selfdrive/modeld/models/supercombo.onnx
-
-# Restore third_party
-cp -r $SOURCE_DIR/third_party .
 
 # Mark as prebuilt release
 touch prebuilt

@@ -185,7 +185,7 @@ node {
             //["upload master", "RELEASE_CHANNEL=master $SOURCE_DIR/release/upload_casync_channel.sh"],
           ])
         }
-      }
+      },
       // tici tests
       'onroad tests': {
         deviceStage("onroad", "tici-needs-can", [], [

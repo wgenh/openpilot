@@ -19,20 +19,19 @@ def cache(user_function: Callable[..., _RT], /) -> Callable[..., _RT]:
   return lru_cache(maxsize=None)(user_function)
 
 
-def run_cmd(cmd: list[str]) -> str:
-  return subprocess.check_output(cmd, encoding='utf8').strip()
+def run_cmd(cmd: list[str], cwd=None) -> str:
+  return subprocess.check_output(cmd, encoding='utf8', cwd=cwd).strip()
 
 
-def run_cmd_default(cmd: list[str], default: str = "") -> str:
+def run_cmd_default(cmd: list[str], default: str = "", cwd=None) -> str:
   try:
-    return run_cmd(cmd)
+    return run_cmd(cmd, cwd=cwd)
   except subprocess.CalledProcessError:
     return default
 
 
-@cache
-def get_commit(branch: str = "HEAD") -> str:
-  return run_cmd_default(["git", "rev-parse", branch])
+def get_commit(branch: str = "HEAD", path=None) -> str:
+  return run_cmd_default(["git", "rev-parse", branch], cwd=path)
 
 
 @cache
@@ -45,9 +44,8 @@ def get_short_branch() -> str:
   return run_cmd_default(["git", "rev-parse", "--abbrev-ref", "HEAD"])
 
 
-@cache
-def get_branch() -> str:
-  return run_cmd_default(["git", "rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}"])
+def get_branch(path: str = BASEDIR) -> str:
+  return run_cmd_default(["git", "rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}"], cwd=path)
 
 
 @cache
@@ -69,11 +67,15 @@ def get_normalized_origin() -> str:
     .replace(":", "/", 1)
 
 
-@cache
-def get_version() -> str:
-  with open(os.path.join(BASEDIR, "common", "version.h")) as _versionf:
+def get_version(path: str = BASEDIR) -> str:
+  with open(os.path.join(path, "common", "version.h")) as _versionf:
     version = _versionf.read().split('"')[1]
   return version
+
+def get_release_notes(path: str) -> str:
+  with open(os.path.join(path, "RELEASES.md"), "r") as f:
+    return f.read().split('\n\n', 1)[0]
+
 
 @cache
 def get_short_version() -> str:

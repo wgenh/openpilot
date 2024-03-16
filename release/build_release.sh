@@ -39,10 +39,17 @@ cd $SOURCE_DIR
 cp -pR --parents $(cat release/files_common) $BUILD_DIR/
 cp -pR --parents $(cat $FILES_SRC) $BUILD_DIR/
 
+cd $BUILD_DIR
+
+VERSION=$(cat common/version.h | awk -F[\"-]  '{print $2}')
+echo "#define COMMA_VERSION \"$VERSION-release\"" > common/version.h
+
+echo "[-] committing version $VERSION T=$SECONDS"
+git add -f .
+git commit -a -m "openpilot v$VERSION release"
+
 echo "[-] creating prebuilt T=$SECONDS"
 release/create_prebuilt.sh $BUILD_DIR
-
-cd $BUILD_DIR
 
 # Ensure no submodules in release
 if test "$(git submodule--helper list | wc -l)" -gt "0"; then
@@ -51,9 +58,6 @@ if test "$(git submodule--helper list | wc -l)" -gt "0"; then
   exit 1
 fi
 git submodule status
-
-# Restore third_party
-git checkout third_party/
 
 # Add built files to git
 git add -f .

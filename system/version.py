@@ -72,6 +72,7 @@ def get_version(path: str = BASEDIR) -> str:
     version = _versionf.read().split('"')[1]
   return version
 
+
 def get_release_notes(path: str) -> str:
   with open(os.path.join(path, "RELEASES.md"), "r") as f:
     return f.read().split('\n\n', 1)[0]
